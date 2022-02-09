@@ -18,6 +18,7 @@ Data_Science (R)
   - classWork_8
 - Notes
   - Week_1
-    - ....
-    - ....
+    - code_2022-01-27.R
+    - code_2022-02-01.R
   - Week_2
+    - code_2022-02-03.R
