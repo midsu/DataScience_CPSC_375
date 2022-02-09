@@ -16,7 +16,7 @@ Data_Science (R)
   - classWork_6
   - classWork_7
   - classWork_8
--Notes
+- Notes
   - Week_1
     -....
     -....
