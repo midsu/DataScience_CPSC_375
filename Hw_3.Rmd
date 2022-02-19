@@ -1,0 +1,75 @@
+---
+title: "CPSC 375 Homework 3"
+author: "Kenn Son, Hamid Suda, Vivian Truong"
+date: "2/16/2022"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r lib}
+library(ggplot2)
+```
+
+The main purpose of this assignment is to test your understanding of how to choose the appropriate visualization. Use the in-built dataset, esoph, for this problem (“Data from a case-control study of (o)esophageal cancer in Ille-et-Vilaine, France.”). All plots should use ggplot. For each question, give the code and include the plot, if created.
+
+a) Does the dataset contain any NAs? If so, which variables have NAs? What is the type of variable tobgp? [Hint: use str() and summary()]
+
+|           There is no NAs in the dataset.
+```{r a_i}
+esoph[is.na(esoph),]
+```
+|           topgp variable is a factor.
+```{r a_ii}
+str(esoph$tobgp)
+```
+
+b) Visualize variable ncases. Give a more descriptive name to the axis (Hint: help(esoph) to see a description of the dataset). Does this variable contain outliers? Do you think these values are really outliers or legitimate values?
+
+|           Yes there is an outlier if you look at the corresponding boxplot, there exist values above the treash hold.
+```{r b}
+summary(esoph$ncases)
+IQR(esoph$ncases,na.rm = TRUE)
+quantile(esoph$ncases)
+4+1.5*4
+0-1.5*4
+ggplot(data=esoph) + geom_boxplot(mapping = aes(y = ncases)) + 
+  labs(y = "Number of Cases") + xlim(c(-.75,.75))
+```
+
+c) Visualize variable agegp. Give a more descriptive name to the axis. (Hint: use geom_bar() for discrete variables.)
+
+```{r c}
+ggplot(data=esoph) + 
+  geom_bar(mapping = aes(x = agegp), fill = "blue", color = "black") +
+  labs(x = "Age Group")
+```
+
+d) Visualize variables _agegp_ and _alcgp_. 
+
+```{r d}
+ggplot(data=esoph) + geom_bar(mapping = aes(x=agegp, fill=alcgp))
+```
+
+e) Visualize variables _alcgp_ and _ncontrols_.
+
+```{r e}
+ggplot(data=esoph) + geom_boxplot(mapping = aes(x=alcgp, y=ncontrols))
+```
+
+f) Visualize variables _ncases_ and _ncontrols_.
+
+```{r f}
+ggplot(data=esoph) + geom_boxplot(mapping = aes(x=alcgp, y=ncontrols)) + 
+  labs(x = "Alcohol Group", y = "Number of Controls")
+```
+
+g) Visualize variables _ncases_, _ncontrols_, and _alcgp_.
+
+```{r g}
+ggplot(data=esoph) + geom_point(mapping = aes(x=ncases,y=ncontrols, color = alcgp))
+```
