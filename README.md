@@ -20,7 +20,17 @@ Data_Science (R)
   - classWork_8
 - Notes
   - Week_1
+    - What Is Data Science.pptx
+    - Introduction to R.pptx
     - code_2022-01-27.R
     - code_2022-02-01.R
   - Week_2
+    - Data Visualization.ppts
     - code_2022-02-03.R
+  - Week_3
+    - Exploratory Data analysis.pptx
+    - code_2022-02-08.R
+  - Week_4
+    - Data Wrangling.pptx
+    - code_2022-02-15.R
+  - Week_5
