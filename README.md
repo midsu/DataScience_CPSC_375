@@ -7,6 +7,8 @@ Data_Science (R)
   - Hw_1
   - Hw_2
   - Hw_3
+  - Hw_4
+  - Hw_5
 - Classworks
   - classWork_1
   - classWork_2
