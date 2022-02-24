@@ -1,0 +1,30 @@
+library(tidyverse)
+str(mpg)
+mpg %>% summarise(n())
+mpg %>% group_by(manufacturer)
+mpg %>% group_by(manufacturer) %>% summarise(n())
+mpg %>% group_by(manufacturer) %>% summarise(max(cty))
+mpg %>% summarise(max(cty))
+mpg %>% group_by(manufacturer, year) %>% summarise(n())
+mpg %>% summarise(mean(cty))
+mpg %>% group_by(year) %>% summarise(mean(cty))
+mpg %>% top_n(1, cty)
+mpg %>% summarise(max(cty))
+
+mpg %>% view()
+mpg %>% rename(manu=manufacturer) %>% view()
+mpg %>% mutate(manu=manufacturer) %>% view()
+mpg %>% mutate(manu=manufacturer) %>% select(-manufacturer) %>% view()
+mpg %>% mutate(manu=manufacturer) %>% select(-manufacturer) %>% select(c(11,1:10)) %>% view()
+
+band_members %>% inner_join(band_instruments)
+band_members %>% left_join(band_instruments)
+band_members %>% full_join(band_instruments)
+band_members
+band_instruments2
+band_members %>% inner_join(band_instruments2)
+band_members %>% inner_join(band_instruments2, by=c(name="artist"))
+band_members %>% rename(artist=name) %>% inner_join(band_instruments2)
+band_members_4rows
+band_members_4rows %>% semi_join(band_instruments_4rows)
+band_members_4rows %>% anti_join(band_instruments_4rows)
