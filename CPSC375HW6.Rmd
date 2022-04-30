@@ -1,0 +1,102 @@
+---
+title: "CPSC375HW6"
+author: "Kenn Son, Hamid Suda, Vivian Truong"
+date: "3/17/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(class)
+```
+
+Body fat percentage refers to the relative proportions of body weight in terms of lean body mass (muscle, bone, internal organs, and connective tissue) and body fat. The most accurate means of estimating body fat percentage are cumbersome and require specialized equipment. Instead, we can estimate bodyfat percentage from other measurements. 
+
+Consider this dataset of 13 measurements from subjects (all men) along with their bodyfat percentage:
+http://staff.pubhealth.ku.dk/~tag/Teaching/share/data/Bodyfat.csv
+Note that you can read from the URL directly, like so:
+read_csv("http://staff.pubhealth.ku.dk/~tag/Teaching/share/data/Bodyfat.csv")
+
+
+Read the data file and answer the following questions. 
+```{r 1}
+health <- read.csv("http://staff.pubhealth.ku.dk/~tag/Teaching/share/data/Bodyfat.csv")
+#health
+```
+
+|         a)  Plot bodyfat vs. Height (code, plot) Which is the dependent variable? Which is the independent variable?
+
+```{r 1a}
+ggplot(data=health) + geom_point(mapping = aes(x = Height, y = bodyfat))
+```
+
+|           According to the graph _bodyfat_ is the independent as height would be constant, and _Height_ is the dependent variable since it is continuous.
+|
+|         b)  There is one obvious outlier in the Height column. Remove the corresponding row from the data. (Show: plot, code to remove the row). This will be the data used for the following questions. Confirm that the mean Height is now 70.31076.
+
+```{r 2b}
+health <- health %>% filter(Height > 30)
+ggplot(data=health) + geom_point(mapping = aes(x = Height, y = bodyfat))
+health %>% summarise(mean(Height))
+```
+
+|         c)  Create a linear model of bodyfat vs. Height. (code, output of summary(model))
+
+```{r 1c}
+m <- lm(bodyfat~Height, data=health)
+summary(m)
+```
+
+|             I) What is the R2 value?
+|               R2 value = 0.0005468
+|             II) Is this a “good” model? Why or why not?
+|               By looking at the scatterplot and R2 we can conclude that there is no correlation between Height and bodyfat
+|             III) What is the linear equation relating bodyfat and Height according to this model?
+|               Height = 24.3412 - 0.0746*bodyfat
+
+|         d)  Create a linear model of bodyfat vs. Weight. (code, output of summary(model))
+```{r 1d}
+m <- lm(bodyfat~Weight, data=health)
+summary(m)
+```
+|             I)  What is the R2 value?
+|                 R2 = 6.616
+|             II) Is this a better model than that based on Height? Why or why not?
+|                 Yes this is a better model than the one based on Height. The closer R2 is to 1 it means that there is a stronger correlation between the two variables.
+|             III)What is the linear equation relating bodyfat and Weight according to this model?
+|                   bodyfat = -11.88891 + 0.17327*Weight
+|             IV) Plot bodyfat vs. Weight and overlay the best fit line. Use a different color for the line. (plot, code)
+```{r 1d4}
+cf <- coef(m)
+ggplot(data=health) + geom_point(mapping = aes(x = Weight, y = bodyfat)) + 
+  geom_abline(slope=cf[2], intercept=cf[1], color = "red")
+
+```
+|             V)  Plot the histogram of residuals (plot, code). Does this show an approximately normal distribution?
+```{r 1d5}
+ggplot(data=health) + geom_histogram(mapping = aes(x = residuals(m)))
+```
+|             VI) From the model, predict the bodyfat for two persons: Person A weighs 150 lbs, Person B weighs 300lbs. Include the 99% confidence intervals for the predictions. In which prediction (for Person A or B), are you more confident? Why?
+
+```{r 1d6}
+predx <- data.frame(Weight = c(150, 300))
+predict(m, predx, interval="confidence", level=0.99)
+```
+|           I am more confident in Person A because the interval range is smaller in the model compared to Person B.
+|
+|         e)  Create a linear model of bodyfat vs. Weight and Height. (code, output of summary(model))
+```{r 2e}
+m = lm(bodyfat~Weight+Height, data = health)
+summary(m)
+```
+|           I)  What is the R2 value?
+|               R2 = 0.5094
+|           II) Is this a better model than that based only on Weight or Height? Why or why not?
+|               
+|           III)What is the linear equation relating bodyfat, Weight, and Height according to this model?
+|           IV) From the model, predict the bodyfat for two persons: Person A weighs 150 lbs, Person B weighs 300lbs. Both persons have height=70”. Include the 99% confidence intervals for the predictions. In which prediction (for Person A or B), are you more confident? Why?
+

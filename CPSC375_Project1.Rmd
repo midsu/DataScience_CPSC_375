@@ -1,0 +1,207 @@
+---
+title: "CPSC 375 Project 1"
+author: "Kenn Son, Hamid Suha, Vivian Truong"
+date: "4/7/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r import}
+setwd("~/Documents/CPSC-375")
+
+library(tidyverse)
+library(class)
+library(ggplot2)
+```
+
+1) Data preparation/wrangling to get all the data into one table that can be used for linear modeling
+
+|       a)reading the data files using read_csv()
+
+```{r 1a}
+covid <- read_csv("https://raw.githubusercontent.com/govex/COVID-19/master/data_tables/vaccine_data/global_data/time_series_covid19_vaccine_doses_admin_global.csv")
+
+bed <- read_csv("hospitalbed.csv")
+
+demo <- read_csv("demographics.csv")
+```
+
+|       b) Removing unneeded rows (e.g., countries like Brazil and India report Province_State-level data that is not needed as we are studying only country-level rates) and columns. 
+
+```{r 1b}
+
+covid <- covid %>% filter(Population >= 0, is.na(Province_State))
+covid <- covid %>% select(-Admin2, -FIPS, -Province_State, -UID, -iso2, -iso3, -code3, -Lat, -Long_, -Combined_Key)
+covid
+
+demo <- demo %>% select(-`Series Name`, -`Country Code`) 
+
+```
+
+|       c) tidying tables, as needed. For example, the vaccinations data is not tidy.
+
+```{r 1c}
+
+covid <- covid %>% pivot_longer(-c(Country_Region, Population), names_to = "Date", values_to = "shots") %>% view()
+covid <- covid %>% filter(shots > 0) %>% view()
+
+#bed <- bed %>% arrange(Year) %>% pivot_wider( names_from = "Year", 
+#             values_from = "Hospital beds (per 10 000 population)")
+
+demo <- demo %>% pivot_wider(names_from = "Series Code", values_from = YR2015)
+```
+
+|       d) Calculate the vaccination rate: vaccinations/population
+
+```{r 1d}
+covid <- covid %>% mutate(vacRate = shots/Population) %>% view()
+covid
+```
+
+|       e) Since the most important factor affecting vaccination rate is the number of days since vaccination began (vaccination rate always increases), calculate a variable that is: number of days since first non-zero vaccination number. This variable will be important for modeling. 
+
+```{r 1e}
+covid <- covid %>% group_by(Country_Region) %>% mutate(daysSinceStart = 1:n())
+covid <- covid %>% select(-Date)
+covid
+```
+
+|       f) Discard data that is not needed. For example, only the number of hospital beds from the most recent year is necessary.
+
+```{r 1f}
+bed.new <- bed %>% group_by(Country) %>% summarise(Year = max(Year))
+bed <- inner_join(bed.new, bed)
+bed <- bed %>% mutate(beds = `Hospital beds (per 10 000 population)`) %>% 
+  select(-Year, -`Hospital beds (per 10 000 population)`)
+
+bed
+```
+
+|       g) You can ignore sex-related differences in demographics in this project, so add the male/female population numbers together (already done in HW #5).
+
+```{r 1g}
+demo.total <- demo %>% mutate(SP.POP.80UP=SP.POP.80UP.FE+SP.POP.80UP.MA) %>%
+  mutate(SP.POP.1564.IN=SP.POP.1564.MA.IN+SP.POP.1564.FE.IN) %>%
+  mutate(SP.POP.0014.IN=SP.POP.0014.MA.IN+SP.POP.0014.FE.IN) %>%
+  mutate(SP.DYN.AMRT=SP.DYN.AMRT.MA+SP.DYN.AMRT.FE) %>%
+  mutate(SP.POP.TOTL.IN=SP.POP.TOTL.FE.IN+SP.POP.TOTL.MA.IN) %>%
+  mutate(SP.POP.65UP.IN=SP.POP.65UP.FE.IN+SP.POP.65UP.MA.IN) %>%
+  select(-contains(".FE")) %>% select(-contains(".MA"))
+
+demo <- demo.total %>% group_by(`Country Name`) %>%
+  summarise(SP.DYN.LE00.IN = sum(SP.DYN.LE00.IN, na.rm = TRUE),
+            SP.URB.TOTL= sum(SP.URB.TOTL, na.rm = TRUE),
+            SP.POP.TOTL= sum(SP.POP.TOTL, na.rm = TRUE),
+            SP.POP.80UP= sum(SP.POP.80UP, na.rm = TRUE),
+            SP.POP.1564.IN= sum(SP.POP.1564.IN, na.rm = TRUE),
+            SP.POP.0014.IN= sum(SP.POP.0014.IN, na.rm = TRUE),
+            SP.DYN.AMRT= sum(SP.DYN.AMRT, na.rm = TRUE),
+            SP.POP.TOTL.IN= sum(SP.POP.TOTL.IN, na.rm = TRUE),
+            SP.POP.65UP.IN= sum(SP.POP.65UP.IN, na.rm = TRUE))
+demo
+```
+
+|       h) Merge all tables (Hint: Join using the country name)
+
+```{r 1h}
+#Unifying Country Names
+demo <- demo %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Republic of Korea",
+                                  "South Korea")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Egypt, Arab Rep.",
+                                  "Egypt")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Gambia, The",
+                                  "Gambia")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "St. Vincent and the Grenadines",
+                                  "Saint Vincent and the Grenadines")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "St. Lucia",
+                                  "Saint Lucia")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Lao PDR",
+                                  "Laos")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Slovak Republic",
+                                  "Slovakia")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Bahamas, The",
+                                  "Bahamas")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Iran, Islamic Rep.",
+                                  "Iran")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "Venezuela, RB",
+                                  "Venezuela")) %>%
+  mutate(`Country Name` = replace(`Country Name`, `Country Name` == "St. Kitts and Nevis  ",
+                                  "Saint Kitts and Nevis"))
+
+bed <- bed %>%
+  mutate(Country = replace(Country, Country == "Venezuela (Bolivarian Republic of)",
+                           "Venezuela")) %>% 
+  mutate(Country = replace(Country, Country == "Viet Nam",
+                           "Vietnam")) %>%
+  mutate(Country = replace(Country, Country == "United States",
+                           "United States of America")) %>%
+  mutate(Country = replace(Country, Country == "Iran (Islamic Republic of) ",
+                           " Iran")) %>%
+  mutate(Country = replace(Country, Country == "Lao People's Democratic Republic",
+                           " Laos")) %>%
+  mutate(Country = replace(Country, Country == "Bolivia",
+                           "Bolivia (Plurinational State of)"))
+
+covid <- covid %>% mutate(Country_Region = replace(Country_Region,
+                                                   Country_Region == "US", "United States of America")) 
+
+big_data <- covid %>% inner_join(bed, by=c(Country_Region = "Country")) %>%
+  inner_join(demo, by=c(Country_Region = "Country Name"))
+
+big_data <- big_data %>% rename(Country = Country_Region) %>%
+  relocate(shots, .after = Country) %>% relocate(vacRate, .after = Country)
+
+big_data
+```
+
+2) Linear modeling the Covid vaccination rate 
+Make a list of all predictor variables that are available. The challenge is to identify which combination of these predictors will give the best predictive model. You should also try transforming some of the variables (e.g., transforming population counts to proportion of total population). Run linear regression with at least 5 different combinations of predictor variables. 
+Note: each day becomes one data point, i.e., the vaccination rate is calculated for each day for each country. The number of vaccinations should not be used as an independent variable as this is essentially what you are predicting.
+
+```{r 2}
+combo1 <- lm(vacRate~SP.POP.0014.IN+SP.POP.1564.IN+beds, data = big_data)
+combo2 <- lm(vacRate~SP.DYN.AMRT+beds, data = big_data)
+combo3 <- lm(vacRate~SP.POP.65UP.IN+beds+SP.POP.80UP, data = big_data)
+combo4 <- lm(vacRate~SP.POP.80UP+beds, data = big_data)
+combo5 <- lm(vacRate~Population+beds+daysSinceStart, data = big_data)
+
+summary(combo1)
+summary(combo2)
+summary(combo3)
+summary(combo4)
+summary(combo5)
+
+cf1 <- coef(combo1)
+cf2 <- coef(combo2)
+cf3 <- coef(combo3)
+cf4 <- coef(combo4)
+cf5 <- coef(combo5)
+```
+
+Write a short report describing your data wrangling steps and the different combinations of predictor variables you tried, and any variable transforms.  [A PDF file]
+
+|       The report should include the following plots:
+|           i) a scatterplot of only the most recent vaccination rate for every country and the number of days since first vaccination
+
+```{r i}
+ggplot(big_data) + geom_point(mapping = aes(x = daysSinceStart, y = vacRate))
+```
+
+|           ii) a summary bar graph with the R2 values on the y-axis and a corresponding model name on the x-axis (include all the different models you tried). 
+
+```{r ii}
+R2 = c(0.04034,0.134,0.03136,0.028,0.6278)
+big_data.R2 <- data.frame (Model  = c("M1","M2","M3","M4","M5"),
+                  Rsquared = R2)
+ggplot(big_data.R2, aes(x = Model, y=Rsquared)) + geom_bar(stat = "identity", width=1)
+```
+
+
+
