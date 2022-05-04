@@ -39,4 +39,20 @@ Data_Science (R)
     - code_2022-02-24.R
     - code_2022-03-01.R
   - Week_6
-  
+    - code_2022-03-03.R
+    - code_2022-03-08.R
+    - code_20220310.R
+  - Week_7
+    - code_20220317.R
+  - Week_8
+    - code_20220407.R
+  - Week_8
+    - code_20220414.R
+  - Week_8
+    - R code from 4/21-4/28 (text analysis) 
+
+
+
+
+
+
